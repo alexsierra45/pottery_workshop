@@ -3,6 +3,7 @@
 
 #include <vector>
 #include <string>
+#include <optional>
 #include </usr/include/jsoncpp/json/json.h>
 
 #include "Producto.h"
@@ -39,11 +40,11 @@ class FileManager {
         int obtenerUltimoId(const std::string& entidad);
         void actualizarUltimoId(const std::string& entidad, int nuevoId);
 
-        static Cliente* obtenerClientePorId(std::vector<Cliente> clientes, int id);
-        static Producto* obtenerProductoPorId(std::vector<Producto> productos, int id);
-        static Pasta* obtenerPastaPorId(std::vector<Pasta> pastas, int id);
-        static Ingrediente* obtenerIngredientePorId(std::vector<Ingrediente> ingredientes, int id);
-        static Esmalte* obtenerEsmaltePorId(std::vector<Esmalte> esmaltes, int id);
+        static std::optional<Cliente> obtenerClientePorId(const std::vector<Cliente>& clientes, int id);
+        static std::optional<Producto> obtenerProductoPorId(const std::vector<Producto>& productos, int id);
+        static std::optional<Pasta> obtenerPastaPorId(const std::vector<Pasta>& pastas, int id);
+        static std::optional<Ingrediente> obtenerIngredientePorId(const std::vector<Ingrediente>& ingredientes, int id);
+        static std::optional<Esmalte> obtenerEsmaltePorId(const std::vector<Esmalte>& esmaltes, int id);
 
     private:
         const std::string archivoIds = "data/ultimos_ids.json";

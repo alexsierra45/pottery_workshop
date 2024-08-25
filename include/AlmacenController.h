@@ -17,6 +17,7 @@ public:
     void agregarIngrediente();
     bool procesarSolicitud(Solicitud& solicitud);
     void procesarSolicitudesDiarias(std::vector<Solicitud>& solicitudes);
+    std::vector<Producto> obtenerInventario();
 
 private:
     std::vector<Producto> inventario;

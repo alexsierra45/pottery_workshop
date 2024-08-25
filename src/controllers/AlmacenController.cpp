@@ -1,5 +1,6 @@
 #include <iostream>
 #include <algorithm>
+#include <limits>
 
 #include "AlmacenController.h"
 #include "FileManager.h"
@@ -8,6 +9,10 @@ AlmacenController::AlmacenController() {
     FileManager fileManager;
 
     inventario = fileManager.cargarProductosDesdeArchivo();
+}
+
+std::vector<Producto> AlmacenController::obtenerInventario() {
+    return inventario;
 }
 
 void AlmacenController::agregarIngrediente() {
@@ -34,16 +39,21 @@ void AlmacenController::agregarIngrediente() {
 void AlmacenController::agregarEsmalte() {
     FileManager fileManager;
     int id;
-    std::string color;
     std::vector<Ingrediente> ingredientes;
 
     id = fileManager.generarNuevoId("esmaltes");
 
     std::cout << "Ingrese el color del esmalte: ";
-    std::cin.ignore();
-    std::getline(std::cin, color);
+    std::string color;
+    std::cin >> color;
 
     std::vector<Ingrediente> ingredientesDisponibles = fileManager.cargarIngredientesDesdeArchivo();
+
+    if (ingredientesDisponibles.empty()) {
+        std::cout << "No hay ingredientes disponibles para seleccionar.\n";
+        return;
+    }
+
     char opcion;
     do {
         std::cout << "Ingredientes disponibles:\n";
@@ -55,9 +65,19 @@ void AlmacenController::agregarEsmalte() {
         std::cout << "Seleccione el ID del ingrediente: ";
         std::cin >> idIngrediente;
 
-        Ingrediente* ingrediente = fileManager.obtenerIngredientePorId(ingredientesDisponibles, idIngrediente);
+        std::optional<Ingrediente> ingrediente = fileManager.obtenerIngredientePorId(ingredientesDisponibles, idIngrediente);
+
         if (ingrediente) {
-            ingredientes.push_back(*ingrediente);
+            // Verificar si el ingrediente ya fue agregado
+            auto it = std::find_if(ingredientes.begin(), ingredientes.end(), 
+                [idIngrediente](const Ingrediente& ing) { return ing.getId() == idIngrediente; });
+
+            if (it == ingredientes.end()) {
+                ingredientes.push_back(*ingrediente);
+                std::cout << "Ingrediente agregado.\n";
+            } else {
+                std::cout << "El ingrediente ya ha sido agregado.\n";
+            }
         } else {
             std::cout << "Ingrediente no encontrado. Intente nuevamente.\n";
         }
@@ -66,6 +86,7 @@ void AlmacenController::agregarEsmalte() {
         std::cin >> opcion;
     } while (opcion == 's' || opcion == 'S');
 
+    // Crear y guardar el nuevo esmalte
     Esmalte nuevoEsmalte(id, color, ingredientes);
     fileManager.guardarEsmalteEnArchivo(nuevoEsmalte);
 
@@ -106,7 +127,7 @@ void AlmacenController::crearProducto() {
     std::cout << "Ingrese dimensiones (largo, ancho, altura, grosor): ";
     std::cin >> dimensiones.largo >> dimensiones.ancho >> dimensiones.altura >> dimensiones.grosor;
 
-    Pasta* pasta = nullptr;
+    std::optional<Pasta> pasta = std::nullopt;
     std::vector<Pasta> pastas = fileManager.cargarPastasDesdeArchivo();
     while (!pasta) {
         std::cout << "Pastas disponibles:\n";
@@ -124,7 +145,7 @@ void AlmacenController::crearProducto() {
         }
     }
 
-    Esmalte* esmalte = nullptr;
+    std::optional<Esmalte> esmalte = std::nullopt;
     std::vector<Esmalte> esmaltes = fileManager.cargarEsmaltesDesdeArchivo();
     while (!esmalte) {
         std::cout << "Esmaltes disponibles:\n";
@@ -155,6 +176,7 @@ void AlmacenController::crearProducto() {
     if (pasta && esmalte) {
         Producto producto(id, dimensiones, *pasta, *esmalte, precio, descripcion, existencia);
         inventario.push_back(producto);
+        fileManager.guardarProductoEnArchivo(producto);
         std::cout << "Producto creado y agregado al inventario.\n";
     } else {
         std::cout << "Error: Pasta o esmalte no encontrados.\n";
@@ -176,25 +198,28 @@ void AlmacenController::agregarExistencia() {
     FileManager fileManager;
 
     int productoId;
-    std::vector<Producto> productos = fileManager.cargarProductosDesdeArchivo();
+    std::vector<Producto> productos = inventario;
     std::cout << "Productos disponibles:\n";
-            Producto* producto = nullptr;
-        while (!producto) {
-            mostrarProductos(productos);
-            std::cout << "Seleccione el ID del producto: ";
-            std::cin >> productoId;
+    std::optional<Producto> producto = std::nullopt;
+    while (!producto) {
+        mostrarProductos(productos);
+        std::cout << "Seleccione el ID del producto: ";
+        std::cin >> productoId;
 
-            producto = fileManager.obtenerProductoPorId(productos, productoId);
-            if (!producto) {
-                std::cout << "Producto no encontrado. Intente nuevamente." << std::endl;
-            }
+        producto = fileManager.obtenerProductoPorId(productos, productoId);
+        if (!producto) {
+            std::cout << "Producto no encontrado. Intente nuevamente." << std::endl;
         }
+    }
 
     int cantidad;
     std::cout << "Ingrese la cantidad a agregar: ";
     std::cin >> cantidad;
 
     producto->setExistencia(producto->getExistencia() + cantidad);
+    eliminarProducto(producto->getId());
+    inventario.push_back(*producto);
+    fileManager.guardarProductoEnArchivo(*producto);
     std::cout << "Existencia actualizada.\n";
 }
 
@@ -208,7 +233,7 @@ void AlmacenController::eliminarProducto(int id) {
         FileManager fileManager;
         fileManager.guardarProductosEnArchivo(inventario);
 
-        std::cout << "Producto actualizado correctamente.\n";
+        // std::cout << "Producto actualizado correctamente.\n";
     } else {
         std::cout << "Producto con ID " << id << " no encontrada.\n";
     }

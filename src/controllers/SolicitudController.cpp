@@ -31,7 +31,7 @@ void mostrarProductosDisponibles(std::vector<Producto> productos) {
 void SolicitudController::agregarSolicitud() {
     FileManager fileManager;
 
-    Cliente* cliente = nullptr;
+    std::optional<Cliente> cliente = std::nullopt;
 
     const auto& clientes = fileManager.cargarClientesDesdeArchivo();
     while (!cliente) {
@@ -51,7 +51,7 @@ void SolicitudController::agregarSolicitud() {
     const auto& productos = fileManager.cargarProductosDesdeArchivo(); 
     char opcion;
     do {
-        Producto* producto = nullptr;
+        std::optional<Producto> producto = std::nullopt;
         while (!producto) {
             mostrarProductosDisponibles(productos);
             std::cout << "Seleccione el ID del producto: ";

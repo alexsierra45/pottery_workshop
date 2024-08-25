@@ -74,11 +74,11 @@ std::vector<Producto> FileManager::cargarProductosDesdeArchivo() {
 
         std::getline(ss, token, ',');
         pastaId = std::stoi(token);
-        Pasta* pasta = obtenerPastaPorId(pastas, pastaId);
+        std::optional<Pasta> pasta = obtenerPastaPorId(pastas, pastaId);
 
         std::getline(ss, token, ',');
         esmalteId = std::stoi(token);
-        Esmalte* esmalte = obtenerEsmaltePorId(esmaltes, esmalteId);
+        std::optional<Esmalte> esmalte = obtenerEsmaltePorId(esmaltes, esmalteId);
 
         std::getline(ss, token, ',');
         precio = std::stod(token);
@@ -240,10 +240,16 @@ std::vector<Solicitud> FileManager::cargarSolicitudesDesdeArchivo() {
     while (std::getline(archivo, linea)) {
         std::istringstream stream(linea);
         int solicitudId, clienteId, estadoId;
-        stream >> solicitudId >> clienteId >> estadoId;
+        char separador;
 
-        Cliente* cliente = obtenerClientePorId(clientes, clienteId);
-        if (cliente == nullptr) {
+        // Leer la línea de la solicitud
+        if (!(stream >> solicitudId >> separador >> clienteId >> separador >> estadoId)) {
+            std::cerr << "Error al leer la solicitud desde la línea: " << linea << std::endl;
+            continue;
+        }
+
+        std::optional<Cliente> cliente = obtenerClientePorId(clientes, clienteId);
+        if (cliente == std::nullopt) {
             std::cerr << "Cliente con ID " << clienteId << " no encontrado." << std::endl;
             continue;
         }
@@ -257,13 +263,22 @@ std::vector<Solicitud> FileManager::cargarSolicitudesDesdeArchivo() {
             estado = EstadoSolicitud::PENDIENTE_ANTERIOR;
 
         std::vector<PedidoItem> items;
-        int productoId, cantidad;
-        while (stream >> productoId >> cantidad) {
-            Producto* producto = obtenerProductoPorId(productos, productoId);
-            if (producto == nullptr) {
+
+        while (std::getline(archivo, linea) && !linea.empty()) {
+            std::istringstream itemStream(linea);
+            int productoId, cantidad;
+
+            if (!(itemStream >> productoId >> separador >> cantidad)) {
+                std::cerr << "Error al leer el item desde la línea: " << linea << std::endl;
+                continue;
+            }
+
+            std::optional<Producto> producto = obtenerProductoPorId(productos, productoId);
+            if (producto == std::nullopt) {
                 std::cerr << "Producto con ID " << productoId << " no encontrado." << std::endl;
                 continue;
             }
+
             items.push_back(PedidoItem{*producto, cantidad});
         }
 
@@ -283,8 +298,8 @@ void FileManager::guardarPastaEnArchivo(const Pasta& pasta) {
         return;
     }
 
-    archivo << pasta.getId() << " "
-            << pasta.getNombre() << " "
+    archivo << pasta.getId() << ","
+            << pasta.getNombre() << ","
             << pasta.getDescripcion() << std::endl;
 
     archivo.close();
@@ -301,11 +316,21 @@ std::vector<Pasta> FileManager::cargarPastasDesdeArchivo() {
 
     std::string linea;
     while (std::getline(archivo, linea)) {
-        std::istringstream stream(linea);
+        std::istringstream ss(linea);
+        std::string token;
+
         int id;
         std::string nombre, descripcion;
 
-        stream >> id >> nombre >> descripcion;
+        std::getline(ss, token, ',');
+        id = std::stoi(token);
+
+        std::getline(ss, token, ',');
+        nombre = token;
+
+        std::getline(ss, token, ',');
+        descripcion = token;
+
         Pasta pasta(id, nombre, descripcion);
         pastas.push_back(pasta);
     }
@@ -323,8 +348,8 @@ void FileManager::guardarIngredienteEnArchivo(const Ingrediente& ingrediente) {
         return;
     }
 
-    archivo << ingrediente.getId() << " "
-            << ingrediente.getNombre() << " "
+    archivo << ingrediente.getId() << ","
+            << ingrediente.getNombre() << ","
             << ingrediente.getDescripcion() << std::endl;
 
     archivo.close();
@@ -341,11 +366,21 @@ std::vector<Ingrediente> FileManager::cargarIngredientesDesdeArchivo() {
 
     std::string linea;
     while (std::getline(archivo, linea)) {
-        std::istringstream stream(linea);
+        std::istringstream ss(linea);
+        std::string token;
+
         int id;
         std::string nombre, descripcion;
 
-        stream >> id >> nombre >> descripcion;
+        std::getline(ss, token, ',');
+        id = std::stoi(token);
+
+        std::getline(ss, token, ',');
+        nombre = token;
+
+        std::getline(ss, token, ',');
+        descripcion = token;
+
         Ingrediente ingrediente(id, nombre, descripcion);
         ingredientes.push_back(ingrediente);
     }
@@ -363,11 +398,11 @@ void FileManager::guardarEsmalteEnArchivo(const Esmalte& esmalte) {
         return;
     }
 
-    archivo << esmalte.getId() << " "
-            << esmalte.getColor() << " ";
-    
+    archivo << esmalte.getId() << ","
+            << esmalte.getColor();
+
     for (const Ingrediente& ingrediente : esmalte.getIngredientes()) {
-        archivo << ingrediente.getId() << " ";
+        archivo << "," << ingrediente.getId();
     }
 
     archivo << std::endl;
@@ -384,7 +419,7 @@ std::vector<Esmalte> FileManager::cargarEsmaltesDesdeArchivo() {
         return esmaltes;
     }
 
-    std::vector<Ingrediente> ingredientes;
+    std::vector<Ingrediente> ingredientesDisponibles = cargarIngredientesDesdeArchivo();
 
     std::string linea;
     while (std::getline(archivo, linea)) {
@@ -393,13 +428,36 @@ std::vector<Esmalte> FileManager::cargarEsmaltesDesdeArchivo() {
         std::string color;
         std::vector<Ingrediente> ingredientes;
 
-        stream >> id >> color;
+        // Leer ID
+        if (!(stream >> id)) {
+            std::cerr << "Error al leer el ID desde la línea: " << linea << std::endl;
+            continue;
+        }
 
+        // Leer el separador después del ID
+        if (stream.peek() == ',') {
+            stream.ignore();
+        }
+
+        // Leer color
+        if (!std::getline(stream, color, ',')) {
+            std::cerr << "Error al leer el color desde la línea: " << linea << std::endl;
+            continue;
+        }
+
+        // Leer IDs de ingredientes
         int ingredienteId;
         while (stream >> ingredienteId) {
-            Ingrediente* ingrediente = obtenerIngredientePorId(ingredientes, ingredienteId);
+            std::optional<Ingrediente> ingrediente = obtenerIngredientePorId(ingredientesDisponibles, ingredienteId);
             if (ingrediente) {
                 ingredientes.push_back(*ingrediente);
+            } else {
+                std::cerr << "Ingrediente con ID " << ingredienteId << " no encontrado." << std::endl;
+            }
+
+            // Ignorar la coma después del ID del ingrediente
+            if (stream.peek() == ',') {
+                stream.ignore();
             }
         }
 
@@ -408,35 +466,35 @@ std::vector<Esmalte> FileManager::cargarEsmaltesDesdeArchivo() {
     }
 
     archivo.close();
-
     return esmaltes;
 }
 
-Cliente* FileManager::obtenerClientePorId(std::vector<Cliente> clientes, int id) {
-    for (Cliente& cliente : clientes) {
+
+std::optional<Cliente> FileManager::obtenerClientePorId(const std::vector<Cliente>& clientes, int id) {
+    for (const Cliente& cliente : clientes) {
         if (cliente.getId() == id) {
-            return &cliente;
+            return cliente;
         }
     }
-    return nullptr;
+    return std::nullopt;
 }
 
-Producto* FileManager::obtenerProductoPorId(std::vector<Producto> productos, int id) {
-    for (Producto& producto : productos) {
+std::optional<Producto> FileManager::obtenerProductoPorId(const std::vector<Producto>& productos, int id) {
+    for (const Producto& producto : productos) {
         if (producto.getId() == id) {
-            return &producto;
+            return producto;
         }
     }
-    return nullptr;
+    return std::nullopt;
 }
 
-Pasta* FileManager::obtenerPastaPorId(std::vector<Pasta> pastas, int id) {
-    for (Pasta& pasta : pastas) {
+std::optional<Pasta> FileManager::obtenerPastaPorId(const std::vector<Pasta>& pastas, int id) {
+    for (const Pasta& pasta : pastas) {
         if (pasta.getId() == id) {
-            return &pasta;
+            return pasta;
         }
     }
-    return nullptr;
+    return std::nullopt;
 }
 
 int FileManager::generarNuevoId(const std::string& entidad) {
@@ -447,22 +505,22 @@ int FileManager::generarNuevoId(const std::string& entidad) {
     return ultimoId;
 }
 
-Esmalte* FileManager::obtenerEsmaltePorId(std::vector<Esmalte> esmaltes, int id) {
-    for (Esmalte& esmalte : esmaltes) {
+std::optional<Esmalte> FileManager::obtenerEsmaltePorId(const std::vector<Esmalte>& esmaltes, int id) {
+    for (const Esmalte& esmalte : esmaltes) {
         if (esmalte.getId() == id) {
-            return &esmalte;
+            return esmalte;
         }
     }
-    return nullptr;
+    return std::nullopt;
 }
 
-Ingrediente* FileManager::obtenerIngredientePorId(std::vector<Ingrediente> ingredientes, int id) {
-    for (Ingrediente& ingrediente : ingredientes) {
+std::optional<Ingrediente> FileManager::obtenerIngredientePorId(const std::vector<Ingrediente>& ingredientes, int id) {
+    for (const Ingrediente& ingrediente : ingredientes) {
         if (ingrediente.getId() == id) {
-            return &ingrediente;
+            return ingrediente;
         }
     }
-    return nullptr;
+    return std::nullopt;
 }
 
 Json::Value FileManager::leerJsonDesdeArchivo() {
