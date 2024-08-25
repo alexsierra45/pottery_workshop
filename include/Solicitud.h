@@ -10,21 +10,27 @@ struct PedidoItem {
     int cantidad;
 };
 
-class Solicitud {
-public:
-    Solicitud(int id, Cliente& cliente, const std::vector<PedidoItem>& items);
+enum class EstadoSolicitud {
+    PENDIENTE,
+    CUMPLIDA,
+    PENDIENTE_ANTERIOR
+};
 
-    int getId() const;
-    Cliente& getCliente() const;
-    const std::vector<PedidoItem>& getItems() const;
-    bool esCumplida() const;
-    void marcarCumplida();
-    
-private:
-    int id;
-    Cliente& cliente;
-    std::vector<PedidoItem> items;
-    bool cumplida;
+class Solicitud {
+    public:
+        Solicitud(int id, Cliente& cliente, const std::vector<PedidoItem>& items, const EstadoSolicitud estado);
+
+        int getId() const;
+        Cliente& getCliente() const;
+        const std::vector<PedidoItem>& getItems() const;
+        const EstadoSolicitud getEstado() const;
+        void setEstado(EstadoSolicitud nuevoEstado);
+        
+    private:
+        int id;
+        Cliente& cliente;
+        std::vector<PedidoItem> items;
+        EstadoSolicitud estado;
 };
 
 #endif // SOLICITUD_H

@@ -1,7 +1,7 @@
 #include "include/Solicitud.h"
 
-Solicitud::Solicitud(int id, Cliente& cliente, const std::vector<PedidoItem>& items)
-    : id(id), cliente(cliente), items(items), cumplida(false) {}
+Solicitud::Solicitud(int id, Cliente& cliente, const std::vector<PedidoItem>& items, EstadoSolicitud estado = EstadoSolicitud::PENDIENTE)
+    : id(id), cliente(cliente), items(items), estado(estado) {}
 
 int Solicitud::getId() const {
     return id;
@@ -15,10 +15,6 @@ const std::vector<PedidoItem>& Solicitud::getItems() const {
     return items;
 }
 
-bool Solicitud::esCumplida() const {
-    return cumplida;
-}
+const EstadoSolicitud Solicitud::getEstado() const { return estado; }
 
-void Solicitud::marcarCumplida() {
-    cumplida = true;
-}
+void Solicitud::setEstado(EstadoSolicitud nuevoEstado) { estado = nuevoEstado; }
