@@ -1,4 +1,4 @@
-#include "include/Cliente.h"
+#include "Cliente.h"
 
 Cliente::Cliente(int id, const std::string& nombre, const std::string& apellidos, const std::string& direccion)
     : id(id), nombre(nombre), apellidos(apellidos), direccion(direccion), cantidadCompras(0) {}

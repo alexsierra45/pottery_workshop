@@ -1,4 +1,4 @@
-#include "include/Producto.h"
+#include "Producto.h"
 
 Producto::Producto(int id, const Dimensiones& dimensiones, Pasta& pasta, Esmalte& esmalte, double precio, const std::string& descripcion, int existencia)
     : id(id), dimensiones(dimensiones), pasta(pasta), esmalte(esmalte), precio(precio), descripcion(descripcion), existencia(existencia) {}

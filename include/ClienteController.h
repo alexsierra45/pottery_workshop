@@ -8,7 +8,7 @@ class ClienteController {
     public:
         ClienteController();
 
-        void agregarCliente(const Cliente& cliente);
+        void agregarCliente();
         std::vector<Cliente>& obtenerClientes();
 
     private:

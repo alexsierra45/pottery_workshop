@@ -1,4 +1,4 @@
-#include "include/Solicitud.h"
+#include "Solicitud.h"
 
 Solicitud::Solicitud(int id, Cliente& cliente, const std::vector<PedidoItem>& items, EstadoSolicitud estado = EstadoSolicitud::PENDIENTE)
     : id(id), cliente(cliente), items(items), estado(estado) {}
@@ -7,7 +7,7 @@ int Solicitud::getId() const {
     return id;
 }
 
-Cliente& Solicitud::getCliente() const {
+Cliente Solicitud::getCliente() const {
     return cliente;
 }
 

@@ -8,7 +8,7 @@ class SolicitudController {
     public:
         SolicitudController();
 
-        void agregarSolicitud(const Solicitud& solicitud);
+        void agregarSolicitud();
         void eliminarSolicitud(int id);
         Solicitud* obtenerSolicitudPorId(int id);
         std::vector<Solicitud>& obtenerSolicitudes();

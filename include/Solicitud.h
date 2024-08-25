@@ -21,14 +21,14 @@ class Solicitud {
         Solicitud(int id, Cliente& cliente, const std::vector<PedidoItem>& items, const EstadoSolicitud estado);
 
         int getId() const;
-        Cliente& getCliente() const;
+        Cliente getCliente() const;
         const std::vector<PedidoItem>& getItems() const;
         const EstadoSolicitud getEstado() const;
         void setEstado(EstadoSolicitud nuevoEstado);
         
     private:
         int id;
-        Cliente& cliente;
+        Cliente cliente;
         std::vector<PedidoItem> items;
         EstadoSolicitud estado;
 };
