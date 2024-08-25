@@ -3,6 +3,8 @@
 
 #include <vector>
 #include <string>
+#include </usr/include/jsoncpp/json/json.h>
+
 #include "Producto.h"
 #include "Cliente.h"
 #include "Solicitud.h"
@@ -30,12 +32,19 @@ class FileManager {
         static void guardarIngredienteEnArchivo(const Ingrediente& ingrediente);
         static std::vector<Ingrediente> cargarIngredientesDesdeArchivo();
 
+        int obtenerUltimoId(const std::string& entidad);
+        void actualizarUltimoId(const std::string& entidad, int nuevoId);
+
     private:
         static Cliente* obtenerClientePorId(std::vector<Cliente> clientes, int id);
         static Producto* obtenerProductoPorId(std::vector<Producto> productos, int id);
         static Pasta* obtenerPastaPorId(std::vector<Pasta> pastas, int id);
         static Ingrediente* obtenerIngredientePorId(std::vector<Ingrediente> ingredientes, int id);
         static Esmalte* obtenerEsmaltePorId(std::vector<Esmalte> esmaltes, int id);
+
+        const std::string archivoIds = "data/ultimos_ids.json";
+        Json::Value leerJsonDesdeArchivo();
+        void escribirJsonEnArchivo(const Json::Value& root);
 };
 
 #endif // FILE_MANAGER_H

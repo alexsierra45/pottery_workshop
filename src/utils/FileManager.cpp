@@ -146,8 +146,16 @@ void FileManager::guardarSolicitudEnArchivo(const Solicitud& solicitud) {
         return;
     }
 
+    int estadoId;
+    if (solicitud.getEstado() == EstadoSolicitud::CUMPLIDA) 
+        estadoId = 0;
+    else if (solicitud.getEstado() == EstadoSolicitud::PENDIENTE)
+        estadoId = 1;
+    else 
+        estadoId = 2;
+
     archivo << solicitud.getId() << "," << solicitud.getCliente().getId() << ","
-            << solicitud.esCumplida() << std::endl;
+            << estadoId << std::endl;
 
     for (const auto& item : solicitud.getItems()) {
         archivo << item.producto.getId() << "," << item.cantidad << std::endl;
@@ -171,14 +179,22 @@ std::vector<Solicitud> FileManager::cargarSolicitudesDesdeArchivo() {
     std::string linea;
     while (std::getline(archivo, linea)) {
         std::istringstream stream(linea);
-        int solicitudId, clienteId;
-        stream >> solicitudId >> clienteId;
+        int solicitudId, clienteId, estadoId;
+        stream >> solicitudId >> clienteId >> estadoId;
 
         Cliente* cliente = obtenerClientePorId(clientes, clienteId);
         if (cliente == nullptr) {
             std::cerr << "Cliente con ID " << clienteId << " no encontrado." << std::endl;
             continue;
         }
+
+        EstadoSolicitud estado;
+        if (estadoId == 0)
+            estado = EstadoSolicitud::CUMPLIDA;
+        else if (estadoId == 1) 
+            estado = EstadoSolicitud::PENDIENTE;
+        else 
+            estado = EstadoSolicitud::PENDIENTE_ANTERIOR;
 
         std::vector<PedidoItem> items;
         int productoId, cantidad;
@@ -191,7 +207,7 @@ std::vector<Solicitud> FileManager::cargarSolicitudesDesdeArchivo() {
             items.push_back(PedidoItem{*producto, cantidad});
         }
 
-        Solicitud solicitud(solicitudId, *cliente, items);
+        Solicitud solicitud(solicitudId, *cliente, items, estado);
         solicitudes.push_back(solicitud);
     }
 
@@ -373,4 +389,40 @@ Ingrediente* FileManager::obtenerIngredientePorId(std::vector<Ingrediente> ingre
         }
     }
     return nullptr;
+}
+
+Json::Value FileManager::leerJsonDesdeArchivo() {
+    std::ifstream archivo(archivoIds, std::ifstream::binary);
+    Json::Value root;
+
+    if (archivo.is_open()) {
+        archivo >> root;
+        archivo.close();
+    } else {
+        std::cerr << "No se pudo abrir el archivo JSON. Creando uno nuevo." << std::endl;
+    }
+
+    return root;
+}
+
+void FileManager::escribirJsonEnArchivo(const Json::Value& root) {
+    std::ofstream archivo(archivoIds, std::ofstream::binary);
+
+    if (archivo.is_open()) {
+        archivo << root;
+        archivo.close();
+    } else {
+        std::cerr << "No se pudo abrir el archivo para escribir el JSON." << std::endl;
+    }
+}
+
+int FileManager::obtenerUltimoId(const std::string& entidad) {
+    Json::Value root = leerJsonDesdeArchivo();
+    return root.get(entidad, 0).asInt(); 
+}
+
+void FileManager::actualizarUltimoId(const std::string& entidad, int nuevoId) {
+    Json::Value root = leerJsonDesdeArchivo();
+    root[entidad] = nuevoId;
+    escribirJsonEnArchivo(root);
 }
