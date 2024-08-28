@@ -14,6 +14,8 @@ struct Dimensiones {
 
 class Producto {
     public:
+        Producto(int id, const Dimensiones& dimensiones, const Pasta& pasta, const Esmalte& esmalte, double precio, const std::string& descripcion, int existencia) 
+        : id(id), dimensiones(dimensiones), pasta(pasta), esmalte(esmalte), precio(precio), descripcion(descripcion), existencia(existencia) {}
         Producto(int id, const Dimensiones& dimensiones, 
             Pasta& pasta, Esmalte& esmalte, double precio, const std::string& descripcion, int existencia);
 

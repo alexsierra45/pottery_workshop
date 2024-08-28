@@ -193,6 +193,8 @@ void FileManager::guardarSolicitudEnArchivo(const Solicitud& solicitud) {
         archivo << "," << item.producto.getId() << "," << item.cantidad;
     }
 
+    archivo << std::endl;
+
     archivo.close();
 }
 
@@ -200,7 +202,7 @@ void FileManager::guardarSolicitudesEnArchivo(const std::vector<Solicitud>& soli
     std::ofstream archivo("data/solicitudes.txt", std::ios::out | std::ios::trunc);
 
     if (!archivo.is_open()) {
-        std::cerr << "Error al abrir el archivo para guardar Solicituds." << std::endl;
+        std::cerr << "Error al abrir el archivo para guardar solicitudes." << std::endl;
         return;
     }
 
@@ -214,11 +216,13 @@ void FileManager::guardarSolicitudesEnArchivo(const std::vector<Solicitud>& soli
             estadoId = 2;
 
         archivo << solicitud.getId() << "," << solicitud.getCliente().getId() << ","
-                << estadoId << std::endl;
+                << estadoId;
 
         for (const auto& item : solicitud.getItems()) {
-            archivo << item.producto.getId() << "," << item.cantidad << std::endl;
+            archivo << "," << item.producto.getId() << "," << item.cantidad;
         }
+
+        archivo << std::endl;
     }
     
     archivo.close();
@@ -285,7 +289,6 @@ std::vector<Solicitud> FileManager::cargarSolicitudesDesdeArchivo() {
     archivo.close();
     return solicitudes;
 }
-
 
 void FileManager::guardarPastaEnArchivo(const Pasta& pasta) {
     std::ofstream archivo("data/pastas.txt", std::ios::app);
@@ -465,7 +468,6 @@ std::vector<Esmalte> FileManager::cargarEsmaltesDesdeArchivo() {
     archivo.close();
     return esmaltes;
 }
-
 
 std::optional<Cliente> FileManager::obtenerClientePorId(const std::vector<Cliente>& clientes, int id) {
     for (const Cliente& cliente : clientes) {

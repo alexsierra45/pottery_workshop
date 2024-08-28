@@ -66,12 +66,17 @@ void ClienteController::eliminarCliente(int id) {
 
 void ClienteController::agregarCompra(int id) {
     Cliente* cliente = obtenerClientePorId(id);
+    std::cout << cliente->getCantidadCompras() << std::endl;
+    Cliente clienteCpy(cliente->getId(), cliente->getNombre(), cliente->getApellidos(), cliente->getDireccion());
+    for (int i = 0; i < cliente->getCantidadCompras(); ++i) {
+            clienteCpy.incrementarCompras();
+    }
 
     eliminarCliente(id);
 
-    cliente->incrementarCompras();
+    clienteCpy.incrementarCompras();
 
     FileManager fileManager;
-    fileManager.guardarClienteEnArchivo(*cliente);
-    clientes.push_back(*cliente);
+    fileManager.guardarClienteEnArchivo(clienteCpy);
+    clientes.push_back(clienteCpy);
 }

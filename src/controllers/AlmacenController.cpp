@@ -237,8 +237,6 @@ void AlmacenController::eliminarProducto(int id) {
 
         FileManager fileManager;
         fileManager.guardarProductosEnArchivo(inventario);
-
-        // std::cout << "Producto actualizado correctamente.\n";
     } else {
         std::cout << "Producto con ID " << id << " no encontrada.\n";
     }
@@ -246,9 +244,15 @@ void AlmacenController::eliminarProducto(int id) {
 
 // Procesar una solicitud para verificar si puede ser cumplida
 bool AlmacenController::procesarSolicitud(Solicitud& solicitud) {
+    std::ostringstream mensaje;
+
+    // Verificar si hay suficiente inventario para cada item
     for (const auto& item : solicitud.getItems()) {
         if (!haySuficienteInventario(item)) {
             solicitudController->cambiarEstado(EstadoSolicitud::PENDIENTE_ANTERIOR, solicitud.getId());
+            mensaje << "La solicitud con ID " << solicitud.getId() 
+                << " no pudo ser procesada debido a falta de inventario para el producto con ID " << item.producto.getId() << ".\n";
+            std::cout << mensaje.str();
             return false;  // Si falta inventario para algún item, la solicitud no puede ser cumplida
         }
     }
@@ -259,9 +263,20 @@ bool AlmacenController::procesarSolicitud(Solicitud& solicitud) {
     }
 
     solicitudController->cambiarEstado(EstadoSolicitud::CUMPLIDA, solicitud.getId());
+    bool descuento = solicitud.getCliente().esAsiduo();
+    double precio = 0;
+    for(auto item : solicitud.getItems()) {
+        precio += item.producto.getPrecio() * (descuento ? 0.95 : 1) * item.cantidad;
+    }
     clienteController->agregarCompra(solicitud.getCliente().getId());
+    mensaje << "La solicitud con ID " << solicitud.getId() << " ha sido procesada exitosamente.\n";
+    mensaje << "El cliente " << solicitud.getCliente().getNombre() << " pago un total de " << precio
+        << (descuento ? " recibiendo un descuento del 5%" : ".") << "\n";
+    std::cout << mensaje.str();
+    
     return true;
 }
+
 
 // Procesar todas las solicitudes diarias
 void AlmacenController::procesarSolicitudesDiarias() {
@@ -324,14 +339,22 @@ bool AlmacenController::haySuficienteInventario(const PedidoItem& item) {
 
 // Actualizar el inventario después de procesar un item
 void AlmacenController::actualizarInventario(const PedidoItem& item) {
-    FileManager fileManager;
-
     for (auto& producto : inventario) {
         if (producto.getId() == item.producto.getId()) {
-            producto.setExistencia(producto.getExistencia() - item.cantidad);
+            Producto productoCpy(producto.getId(), 
+                producto.getDimensiones(), 
+                producto.getPasta(), 
+                producto.getEsmalte(),
+                producto.getPrecio(), 
+                producto.getDescripcion(), 
+                producto.getExistencia() - item.cantidad);
+
             eliminarProducto(producto.getId());
-            inventario.push_back(producto);
-            fileManager.guardarProductoEnArchivo(producto);
+
+            FileManager fileManager;
+            fileManager.guardarProductoEnArchivo(productoCpy);
+            inventario.push_back(productoCpy);
+
             break;
         }
     }
