@@ -78,6 +78,7 @@ void SolicitudController::agregarSolicitud() {
     Solicitud nuevaSolicitud(nuevaSolicitudId, *cliente, items, EstadoSolicitud::PENDIENTE);
 
     fileManager.guardarSolicitudEnArchivo(nuevaSolicitud);
+    solicitudes.push_back(nuevaSolicitud);
 
     std::cout << "Solicitud creada y guardada exitosamente." << std::endl;
 }

@@ -187,10 +187,10 @@ void FileManager::guardarSolicitudEnArchivo(const Solicitud& solicitud) {
         estadoId = 2;
 
     archivo << solicitud.getId() << "," << solicitud.getCliente().getId() << ","
-            << estadoId << std::endl;
+            << estadoId;
 
     for (const auto& item : solicitud.getItems()) {
-        archivo << item.producto.getId() << "," << item.cantidad << std::endl;
+        archivo << "," << item.producto.getId() << "," << item.cantidad;
     }
 
     archivo.close();
@@ -242,46 +242,42 @@ std::vector<Solicitud> FileManager::cargarSolicitudesDesdeArchivo() {
         int solicitudId, clienteId, estadoId;
         char separador;
 
-        // Leer la línea de la solicitud
+        // Leer la solicitud principal
         if (!(stream >> solicitudId >> separador >> clienteId >> separador >> estadoId)) {
             std::cerr << "Error al leer la solicitud desde la línea: " << linea << std::endl;
             continue;
         }
 
+        // Buscar el cliente
         std::optional<Cliente> cliente = obtenerClientePorId(clientes, clienteId);
         if (cliente == std::nullopt) {
             std::cerr << "Cliente con ID " << clienteId << " no encontrado." << std::endl;
             continue;
         }
 
+        // Determinar el estado de la solicitud
         EstadoSolicitud estado;
         if (estadoId == 0)
             estado = EstadoSolicitud::CUMPLIDA;
-        else if (estadoId == 1) 
+        else if (estadoId == 1)
             estado = EstadoSolicitud::PENDIENTE;
-        else 
+        else
             estado = EstadoSolicitud::PENDIENTE_ANTERIOR;
 
         std::vector<PedidoItem> items;
 
-        while (std::getline(archivo, linea) && !linea.empty()) {
-            std::istringstream itemStream(linea);
-            int productoId, cantidad;
-
-            if (!(itemStream >> productoId >> separador >> cantidad)) {
-                std::cerr << "Error al leer el item desde la línea: " << linea << std::endl;
-                continue;
-            }
-
+        // Leer los items dentro de la misma línea
+        int productoId, cantidad;
+        while (stream >> separador >> productoId >> separador >> cantidad) {
             std::optional<Producto> producto = obtenerProductoPorId(productos, productoId);
             if (producto == std::nullopt) {
                 std::cerr << "Producto con ID " << productoId << " no encontrado." << std::endl;
                 continue;
             }
-
             items.push_back(PedidoItem{*producto, cantidad});
         }
 
+        // Crear la solicitud y agregarla a la lista
         Solicitud solicitud(solicitudId, *cliente, items, estado);
         solicitudes.push_back(solicitud);
     }
@@ -289,6 +285,7 @@ std::vector<Solicitud> FileManager::cargarSolicitudesDesdeArchivo() {
     archivo.close();
     return solicitudes;
 }
+
 
 void FileManager::guardarPastaEnArchivo(const Pasta& pasta) {
     std::ofstream archivo("data/pastas.txt", std::ios::app);

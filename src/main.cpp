@@ -21,6 +21,41 @@ void mostrarMenu() {
     std::cout << "Seleccione una opción: ";
 }
 
+void mostrarClientes(const std::vector<Cliente>& clientes) {
+    std::cout << "===== Clientes =====" << std::endl;
+    for (const auto& cliente : clientes) {
+        std::cout << "ID: " << cliente.getId() << ", Nombre: " << cliente.getNombre() 
+        << " " << cliente.getApellidos() << " " << cliente.getDireccion() << std::endl;
+    }
+}
+
+void mostarSolicitudes(const std::vector<Solicitud> solicitudes) {
+    std::cout << "===== Solicitudes =====" << std::endl;
+    for (const auto& solicitud : solicitudes) {
+        std::string estado;
+        if (solicitud.getEstado() == EstadoSolicitud::CUMPLIDA) 
+            estado = "CUMPLIDA";
+        else if (solicitud.getEstado() == EstadoSolicitud::PENDIENTE) 
+            estado = "PENDIENTE";
+        else estado = "PENDIENTE ANTERIOR"; 
+
+        std::cout << "ID: " << solicitud.getId() << ", Cliente: " 
+            << solicitud.getCliente().getNombre() << ", Estado: " << estado << std::endl;
+        std::cout << "Productos:" << std::endl;
+        for (const auto& pedido : solicitud.getItems()) {
+            std::cout << "    - " << pedido.producto.getDescripcion() << " " << pedido.cantidad << std::endl;
+        }
+    }
+}
+
+void mostrarInventario(const std::vector<Producto> productos) {
+    std::cout << "===== Productos =====" << std::endl;
+    for (const auto& producto : productos) {
+        std::cout << "ID: " << producto.getId() << ", Descripción: " << producto.getDescripcion() 
+        << ", Precio: " << producto.getPrecio() << ", Existencia: " << producto.getExistencia() << std::endl;
+    }
+}
+
 int main() {
     ClienteController clienteController;
     SolicitudController solicitudController;
@@ -40,33 +75,15 @@ int main() {
                 solicitudController.agregarSolicitud();
                 break;
             case 3: {
-                const auto& clientes = clienteController.obtenerClientes();
-                std::cout << "===== Clientes =====" << std::endl;
-                for (const auto& cliente : clientes) {
-                    std::cout << "ID: " << cliente.getId() << ", Nombre: " << cliente.getNombre() 
-                    << " " << cliente.getApellidos() << " " << cliente.getDireccion() << std::endl;
-                }
+                mostrarClientes(clienteController.obtenerClientes());
                 break;
             }
             case 4: {
-                const auto& solicitudes = solicitudController.obtenerSolicitudes();
-                std::cout << "===== Solicitudes =====" << std::endl;
-                for (const auto& solicitud : solicitudes) {
-                    std::cout << "ID: " << solicitud.getId() << ", Cliente: " << solicitud.getCliente().getNombre() << std::endl;
-                    std::cout << "Productos:" << std::endl;
-                    for (const auto& pedido : solicitud.getItems()) {
-                        std::cout << "    - " << pedido.producto.getDescripcion() << " " << pedido.cantidad << std::endl;
-                    }
-                }
+                mostarSolicitudes(solicitudController.obtenerSolicitudes());
                 break;
             }
             case 5: {
-                const auto& productos = almacenController.obtenerInventario();
-                std::cout << "===== Productos =====" << std::endl;
-                for (const auto& producto : productos) {
-                    std::cout << "ID: " << producto.getId() << ", Descripción: " << producto.getDescripcion() 
-                    << ", Precio: " << producto.getPrecio() << ", Existencia: " << producto.getExistencia() << std::endl;
-                }
+                mostrarInventario(almacenController.obtenerInventario());
                 break;
             }
             case 6: {
