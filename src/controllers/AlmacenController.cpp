@@ -271,12 +271,11 @@ bool AlmacenController::procesarSolicitud(Solicitud& solicitud) {
     clienteController->agregarCompra(solicitud.getCliente().getId());
     mensaje << "La solicitud con ID " << solicitud.getId() << " ha sido procesada exitosamente.\n";
     mensaje << "El cliente " << solicitud.getCliente().getNombre() << " pago un total de " << precio
-        << (descuento ? " recibiendo un descuento del 5%" : ".") << "\n";
+        << (descuento ? " recibiendo un descuento del 5%." : ".") << "\n";
     std::cout << mensaje.str();
     
     return true;
 }
-
 
 // Procesar todas las solicitudes diarias
 void AlmacenController::procesarSolicitudesDiarias() {
@@ -325,7 +324,6 @@ void AlmacenController::procesarSolicitudesDiarias() {
         procesarSolicitud(solicitud);
     }
 }
-
 
 // Verificar si hay suficiente inventario para un item específico
 bool AlmacenController::haySuficienteInventario(const PedidoItem& item) {
