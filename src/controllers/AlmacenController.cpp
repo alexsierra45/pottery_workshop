@@ -4,11 +4,16 @@
 
 #include "AlmacenController.h"
 #include "FileManager.h"
+#include "SolicitudController.h"
+#include "ClienteController.h"
 
-AlmacenController::AlmacenController() {
+AlmacenController::AlmacenController(SolicitudController* solicitudController, ClienteController* clienteController) {
     FileManager fileManager;
 
     inventario = fileManager.cargarProductosDesdeArchivo();
+
+    this->solicitudController = solicitudController;
+    this->clienteController = clienteController;
 }
 
 std::vector<Producto> AlmacenController::obtenerInventario() {
@@ -243,6 +248,7 @@ void AlmacenController::eliminarProducto(int id) {
 bool AlmacenController::procesarSolicitud(Solicitud& solicitud) {
     for (const auto& item : solicitud.getItems()) {
         if (!haySuficienteInventario(item)) {
+            solicitudController->cambiarEstado(EstadoSolicitud::PENDIENTE_ANTERIOR, solicitud.getId());
             return false;  // Si falta inventario para algún item, la solicitud no puede ser cumplida
         }
     }
@@ -252,18 +258,59 @@ bool AlmacenController::procesarSolicitud(Solicitud& solicitud) {
         actualizarInventario(item);
     }
 
-    solicitud.setEstado(EstadoSolicitud::CUMPLIDA);
+    solicitudController->cambiarEstado(EstadoSolicitud::CUMPLIDA, solicitud.getId());
+    clienteController->agregarCompra(solicitud.getCliente().getId());
     return true;
 }
 
 // Procesar todas las solicitudes diarias
-void AlmacenController::procesarSolicitudesDiarias(std::vector<Solicitud>& solicitudes) {
+void AlmacenController::procesarSolicitudesDiarias() {
+    std::vector<Solicitud>& solicitudes = solicitudController->obtenerSolicitudes();
+
+    std::vector<Solicitud> solicitudesAnteriores;
+
+    std::vector<Solicitud> solicitudesAsiduos;
+    std::vector<Solicitud> solicitudesNuevos;
+
+    // Separar las solicitudes de clientes asiduos y nuevos
     for (auto& solicitud : solicitudes) {
         if (solicitud.getEstado() == EstadoSolicitud::PENDIENTE) {
-            procesarSolicitud(solicitud);
+            if (solicitud.getCliente().esAsiduo()) {
+                solicitudesAsiduos.push_back(solicitud);
+            } else {
+                solicitudesNuevos.push_back(solicitud);
+            }
+        }
+        else if (solicitud.getEstado() == EstadoSolicitud::PENDIENTE_ANTERIOR) {
+            solicitudesAnteriores.push_back(solicitud);
         }
     }
+
+    for (auto& solicitud : solicitudesAnteriores) {
+        procesarSolicitud(solicitud);
+    }
+
+    std::vector<Solicitud> solicitudesOrdenadas;
+    size_t indexAsiduos = 0, indexNuevos = 0;
+    int contadorAsiduos = 0;
+
+    // Intercalar solicitudes: 2 de asiduos por 1 de nuevos
+    while (indexAsiduos < solicitudesAsiduos.size() || indexNuevos < solicitudesNuevos.size()) {
+        if ((contadorAsiduos < 2 && indexAsiduos < solicitudesAsiduos.size()) || indexNuevos == solicitudesNuevos.size()) {
+            solicitudesOrdenadas.push_back(solicitudesAsiduos[indexAsiduos++]);
+            contadorAsiduos++;
+        } else if (indexNuevos < solicitudesNuevos.size()) {
+            solicitudesOrdenadas.push_back(solicitudesNuevos[indexNuevos++]);
+            contadorAsiduos = 0; // Resetear el contador después de agregar un nuevo
+        }
+    }
+
+    // Procesar las solicitudes ordenadas
+    for (auto& solicitud : solicitudesOrdenadas) {
+        procesarSolicitud(solicitud);
+    }
 }
+
 
 // Verificar si hay suficiente inventario para un item específico
 bool AlmacenController::haySuficienteInventario(const PedidoItem& item) {
@@ -277,9 +324,14 @@ bool AlmacenController::haySuficienteInventario(const PedidoItem& item) {
 
 // Actualizar el inventario después de procesar un item
 void AlmacenController::actualizarInventario(const PedidoItem& item) {
-    for (auto& prod : inventario) {
-        if (prod.getId() == item.producto.getId()) {
-            prod.setExistencia(prod.getExistencia() - item.cantidad);
+    FileManager fileManager;
+
+    for (auto& producto : inventario) {
+        if (producto.getId() == item.producto.getId()) {
+            producto.setExistencia(producto.getExistencia() - item.cantidad);
+            eliminarProducto(producto.getId());
+            inventario.push_back(producto);
+            fileManager.guardarProductoEnArchivo(producto);
             break;
         }
     }

@@ -17,7 +17,8 @@ void mostrarMenu() {
     std::cout << "8. Agregar Pasta" << std::endl;
     std::cout << "9. Agregar Ingrediente" << std::endl;
     std::cout << "10. Agregar existencia" << std::endl;
-    std::cout << "11. Salir" << std::endl;
+    std::cout << "11. Procesar solicitudes diarias" << std::endl;
+    std::cout << "12. Salir" << std::endl;
     std::cout << "Seleccione una opción: ";
 }
 
@@ -25,7 +26,8 @@ void mostrarClientes(const std::vector<Cliente>& clientes) {
     std::cout << "===== Clientes =====" << std::endl;
     for (const auto& cliente : clientes) {
         std::cout << "ID: " << cliente.getId() << ", Nombre: " << cliente.getNombre() 
-        << " " << cliente.getApellidos() << " " << cliente.getDireccion() << std::endl;
+        << " " << cliente.getApellidos() << ", Direccion: " << cliente.getDireccion() 
+        << ", Compras: " << cliente.getCantidadCompras() << std::endl;
     }
 }
 
@@ -59,7 +61,7 @@ void mostrarInventario(const std::vector<Producto> productos) {
 int main() {
     ClienteController clienteController;
     SolicitudController solicitudController;
-    AlmacenController almacenController;
+    AlmacenController almacenController(&solicitudController, &clienteController);
 
     int opcion;
 
@@ -107,6 +109,10 @@ int main() {
                 break;
             }
             case 11:
+                std::cout << "Procesando solicitudes diarias..." << std::endl;
+                almacenController.procesarSolicitudesDiarias();
+                break;
+            case 12:
                 std::cout << "Saliendo del programa..." << std::endl;
                 break;
             default: {
@@ -116,7 +122,7 @@ int main() {
         }
 
         std::cout << std::endl;
-    } while (opcion != 11);
+    } while (opcion != 12);
 
     return 0;
 }

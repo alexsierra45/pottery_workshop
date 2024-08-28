@@ -92,8 +92,6 @@ void SolicitudController::eliminarSolicitud(int id) {
 
         FileManager fileManager;
         fileManager.guardarSolicitudesEnArchivo(solicitudes);
-
-        std::cout << "Solicitud actualizada correctamente.\n";
     } else {
         std::cout << "Solicitud con ID " << id << " no encontrada.\n";
     }
@@ -110,13 +108,15 @@ Solicitud* SolicitudController::obtenerSolicitudPorId(int id) {
 
 void SolicitudController::cambiarEstado(EstadoSolicitud nuevoEstado, int id) {
     Solicitud* solicitud = obtenerSolicitudPorId(id);
+    Solicitud solicitudCpy(solicitud->getId(), solicitud->getCliente(), solicitud->getItems(), solicitud->getEstado());
 
     eliminarSolicitud(id);
 
-    solicitud->setEstado(nuevoEstado);
+    solicitudCpy.setEstado(nuevoEstado);
 
     FileManager fileManager;
-    fileManager.guardarSolicitudEnArchivo(*solicitud);
+    fileManager.guardarSolicitudEnArchivo(solicitudCpy);
+    solicitudes.push_back(solicitudCpy);
 }
 
 std::vector<Solicitud>& SolicitudController::obtenerSolicitudes() {

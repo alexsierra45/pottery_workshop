@@ -1,6 +1,7 @@
-#include "ClienteController.h"
 #include <iostream>
+#include <algorithm>
 
+#include "ClienteController.h"
 #include "FileManager.h"
 
 ClienteController::ClienteController() {
@@ -31,10 +32,46 @@ void ClienteController::agregarCliente() {
     Cliente nuevoCliente(nuevoClienteId, nombre, apellidos, direccion);
 
     fileManager.guardarClienteEnArchivo(nuevoCliente);
+    clientes.push_back(nuevoCliente);
 
     std::cout << "Cliente creado y guardado exitosamente." << std::endl;
 }
 
 std::vector<Cliente>& ClienteController::obtenerClientes() {
     return clientes;
+}
+
+Cliente* ClienteController::obtenerClientePorId(int id) {
+    for (auto& cliente : clientes) {
+        if (cliente.getId() == id) {
+            return &cliente;
+        }
+    }
+    return nullptr;
+}
+
+void ClienteController::eliminarCliente(int id) {
+    auto it = std::remove_if(clientes.begin(), clientes.end(),
+                [id](const Cliente& cliente) { return cliente.getId() == id; });
+    
+    if (it != clientes.end()) {
+        clientes.erase(it, clientes.end());
+
+        FileManager fileManager;
+        fileManager.guardarClientesEnArchivo(clientes);
+    } else {
+        std::cout << "Solicitud con ID " << id << " no encontrada.\n";
+    }
+}
+
+void ClienteController::agregarCompra(int id) {
+    Cliente* cliente = obtenerClientePorId(id);
+
+    eliminarCliente(id);
+
+    cliente->incrementarCompras();
+
+    FileManager fileManager;
+    fileManager.guardarClienteEnArchivo(*cliente);
+    clientes.push_back(*cliente);
 }

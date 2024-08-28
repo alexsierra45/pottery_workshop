@@ -4,10 +4,12 @@
 #include <vector>
 #include "Producto.h"
 #include "Solicitud.h"
+#include "SolicitudController.h"
+#include "ClienteController.h"
 
 class AlmacenController {
 public:
-    AlmacenController();
+    AlmacenController(SolicitudController* solicitudController, ClienteController* clienteController);
 
     void crearProducto();
     void agregarExistencia();
@@ -16,11 +18,13 @@ public:
     void agregarEsmalte();
     void agregarIngrediente();
     bool procesarSolicitud(Solicitud& solicitud);
-    void procesarSolicitudesDiarias(std::vector<Solicitud>& solicitudes);
+    void procesarSolicitudesDiarias();
     std::vector<Producto> obtenerInventario();
 
 private:
     std::vector<Producto> inventario;
+    SolicitudController* solicitudController;
+    ClienteController* clienteController;
 
     bool haySuficienteInventario(const PedidoItem& item);
     void actualizarInventario(const PedidoItem& item);

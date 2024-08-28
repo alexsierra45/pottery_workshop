@@ -10,6 +10,9 @@ class ClienteController {
 
         void agregarCliente();
         std::vector<Cliente>& obtenerClientes();
+        void eliminarCliente(int id);
+        Cliente* obtenerClientePorId(int id);
+        void agregarCompra(int id);
 
     private:
         std::vector<Cliente> clientes;

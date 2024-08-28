@@ -18,6 +18,8 @@ enum class EstadoSolicitud {
 
 class Solicitud {
     public:
+        Solicitud(int id, const Cliente& cliente, const std::vector<PedidoItem>& items, EstadoSolicitud estado)
+        : id(id), cliente(cliente), items(items), estado(estado) {}
         Solicitud(int id, Cliente& cliente, const std::vector<PedidoItem>& items, const EstadoSolicitud estado);
 
         int getId() const;
