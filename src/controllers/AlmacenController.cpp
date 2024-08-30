@@ -279,7 +279,8 @@ bool AlmacenController::procesarSolicitud(Solicitud& solicitud) {
 
 // Procesar todas las solicitudes diarias
 void AlmacenController::procesarSolicitudesDiarias() {
-    std::vector<Solicitud>& solicitudes = solicitudController->obtenerSolicitudes();
+    std::queue<Solicitud>& solicitudes = solicitudController->obtenerSolicitudes();
+    std::queue<Solicitud> auxiliar;
 
     std::vector<Solicitud> solicitudesAnteriores;
 
@@ -287,7 +288,12 @@ void AlmacenController::procesarSolicitudesDiarias() {
     std::vector<Solicitud> solicitudesNuevos;
 
     // Separar las solicitudes de clientes asiduos y nuevos
-    for (auto& solicitud : solicitudes) {
+    // for (auto& solicitud : solicitudes) {
+    while (!solicitudes.empty()) {
+        Solicitud solicitud = solicitudes.front();
+        solicitudes.pop();
+        auxiliar.push(solicitud);
+
         if (solicitud.getEstado() == EstadoSolicitud::PENDIENTE) {
             if (solicitud.getCliente().esAsiduo()) {
                 solicitudesAsiduos.push_back(solicitud);
@@ -299,6 +305,8 @@ void AlmacenController::procesarSolicitudesDiarias() {
             solicitudesAnteriores.push_back(solicitud);
         }
     }
+
+    solicitudes = auxiliar;
 
     for (auto& solicitud : solicitudesAnteriores) {
         procesarSolicitud(solicitud);

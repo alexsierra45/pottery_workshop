@@ -2,6 +2,7 @@
 #include <fstream>
 #include <sstream>
 #include <iostream>
+#include <queue>
 
 void FileManager::guardarProductoEnArchivo(const Producto& producto) {
     std::ofstream archivo("data/productos.txt", std::ios::app);
@@ -198,7 +199,7 @@ void FileManager::guardarSolicitudEnArchivo(const Solicitud& solicitud) {
     archivo.close();
 }
 
-void FileManager::guardarSolicitudesEnArchivo(const std::vector<Solicitud>& solicitudes) {
+void FileManager::guardarSolicitudesEnArchivo(std::queue<Solicitud>& solicitudes) {
     std::ofstream archivo("data/solicitudes.txt", std::ios::out | std::ios::trunc);
 
     if (!archivo.is_open()) {
@@ -206,7 +207,16 @@ void FileManager::guardarSolicitudesEnArchivo(const std::vector<Solicitud>& soli
         return;
     }
 
-    for (Solicitud solicitud : solicitudes) {
+    std::queue<Solicitud> auxiliar;
+
+    Solicitud* it = nullptr;
+
+    while (!solicitudes.empty()) {
+        Solicitud solicitud = solicitudes.front();
+        solicitudes.pop();
+        auxiliar.push(solicitud);
+    // }
+    // for (Solicitud solicitud : solicitudes) {
             int estadoId;
         if (solicitud.getEstado() == EstadoSolicitud::CUMPLIDA) 
             estadoId = 0;
@@ -224,12 +234,14 @@ void FileManager::guardarSolicitudesEnArchivo(const std::vector<Solicitud>& soli
 
         archivo << std::endl;
     }
+
+    solicitudes = auxiliar;
     
     archivo.close();
 }
 
-std::vector<Solicitud> FileManager::cargarSolicitudesDesdeArchivo() {
-    std::vector<Solicitud> solicitudes;
+std::queue<Solicitud> FileManager::cargarSolicitudesDesdeArchivo() {
+    std::queue<Solicitud> solicitudes;
     std::ifstream archivo("data/solicitudes.txt");
 
     if (!archivo.is_open()) {
@@ -283,7 +295,7 @@ std::vector<Solicitud> FileManager::cargarSolicitudesDesdeArchivo() {
 
         // Crear la solicitud y agregarla a la lista
         Solicitud solicitud(solicitudId, *cliente, items, estado);
-        solicitudes.push_back(solicitud);
+        solicitudes.push(solicitud);
     }
 
     archivo.close();

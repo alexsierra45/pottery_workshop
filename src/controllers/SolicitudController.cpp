@@ -1,5 +1,6 @@
 #include <algorithm>
 #include <iostream>
+#include <queue>
 
 #include "SolicitudController.h"
 #include "FileManager.h"
@@ -78,17 +79,32 @@ void SolicitudController::agregarSolicitud() {
     Solicitud nuevaSolicitud(nuevaSolicitudId, *cliente, items, EstadoSolicitud::PENDIENTE);
 
     fileManager.guardarSolicitudEnArchivo(nuevaSolicitud);
-    solicitudes.push_back(nuevaSolicitud);
+    solicitudes.push(nuevaSolicitud);
 
     std::cout << "Solicitud creada y guardada exitosamente." << std::endl;
 }
 
 void SolicitudController::eliminarSolicitud(int id) {
-    auto it = std::remove_if(solicitudes.begin(), solicitudes.end(),
-                [id](const Solicitud& solicitud) { return solicitud.getId() == id; });
+    std::queue<Solicitud> auxiliar;
+
+    Solicitud* it = nullptr;
+
+    while (!solicitudes.empty()) {
+        Solicitud primera = solicitudes.front();
+        solicitudes.pop();
+
+        if (primera.getId() == id) 
+            it = &primera;
+        else 
+            auxiliar.push(primera);
+    }
+
+    solicitudes = auxiliar;
+    // auto it = std::remove_if(solicitudes.begin(), solicitudes.end(),
+    //             [id](const Solicitud& solicitud) { return solicitud.getId() == id; });
     
-    if (it != solicitudes.end()) {
-        solicitudes.erase(it, solicitudes.end());
+    if (it != nullptr) {
+        // solicitudes.erase(it, solicitudes.end());
 
         FileManager fileManager;
         fileManager.guardarSolicitudesEnArchivo(solicitudes);
@@ -98,12 +114,30 @@ void SolicitudController::eliminarSolicitud(int id) {
 }
 
 Solicitud* SolicitudController::obtenerSolicitudPorId(int id) {
-    for (auto& solicitud : solicitudes) {
-        if (solicitud.getId() == id) {
-            return &solicitud;
+    Solicitud* respuesta = nullptr;
+
+    std::queue<Solicitud> auxiliar;
+
+    while (!solicitudes.empty()) {
+        Solicitud primera = solicitudes.front();
+        auxiliar.push(primera);
+        solicitudes.pop();
+
+        if (primera.getId() == id) {
+            respuesta = &primera;
         }
     }
-    return nullptr;
+
+    solicitudes = auxiliar;
+    
+    return respuesta;
+
+    // for (auto& solicitud : solicitudes) {
+    //     if (solicitud.getId() == id) {
+    //         return &solicitud;
+    //     }
+    // }
+    // return nullptr;
 }
 
 void SolicitudController::cambiarEstado(EstadoSolicitud nuevoEstado, int id) {
@@ -116,9 +150,9 @@ void SolicitudController::cambiarEstado(EstadoSolicitud nuevoEstado, int id) {
 
     FileManager fileManager;
     fileManager.guardarSolicitudEnArchivo(solicitudCpy);
-    solicitudes.push_back(solicitudCpy);
+    solicitudes.push(solicitudCpy);
 }
 
-std::vector<Solicitud>& SolicitudController::obtenerSolicitudes() {
+std::queue<Solicitud>& SolicitudController::obtenerSolicitudes() {
     return solicitudes;
 }

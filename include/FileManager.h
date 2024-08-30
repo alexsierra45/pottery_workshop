@@ -2,6 +2,7 @@
 #define FILE_MANAGER_H
 
 #include <vector>
+#include <queue>
 #include <string>
 #include <optional>
 #include </usr/include/jsoncpp/json/json.h>
@@ -23,9 +24,9 @@ class FileManager {
         static void guardarClienteEnArchivo(const Cliente& cliente);
         static std::vector<Cliente> cargarClientesDesdeArchivo();
 
-        static void guardarSolicitudesEnArchivo(const std::vector<Solicitud>& solicitudes);
+        static void guardarSolicitudesEnArchivo(std::queue<Solicitud>& solicitudes);
         static void guardarSolicitudEnArchivo(const Solicitud& solicitud);
-        static std::vector<Solicitud> cargarSolicitudesDesdeArchivo();
+        static std::queue<Solicitud> cargarSolicitudesDesdeArchivo();
 
         static void guardarPastaEnArchivo(const Pasta& pasta);
         static std::vector<Pasta> cargarPastasDesdeArchivo();

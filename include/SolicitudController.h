@@ -1,7 +1,7 @@
 #ifndef SOLICITUD_CONTROLLER_H
 #define SOLICITUD_CONTROLLER_H
 
-#include <vector>
+#include <queue>
 #include "Solicitud.h"
 
 class SolicitudController {
@@ -11,11 +11,11 @@ class SolicitudController {
         void agregarSolicitud();
         void eliminarSolicitud(int id);
         Solicitud* obtenerSolicitudPorId(int id);
-        std::vector<Solicitud>& obtenerSolicitudes();
+        std::queue<Solicitud>& obtenerSolicitudes();
         void cambiarEstado(EstadoSolicitud nuevoEstado, int id);
 
     private:
-        std::vector<Solicitud> solicitudes;
+        std::queue<Solicitud> solicitudes;
 };
 
 #endif // SOLICITUD_CONTROLLER_H

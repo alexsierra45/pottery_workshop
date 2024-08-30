@@ -31,9 +31,12 @@ void mostrarClientes(const std::vector<Cliente>& clientes) {
     }
 }
 
-void mostarSolicitudes(const std::vector<Solicitud> solicitudes) {
+void mostarSolicitudes(std::queue<Solicitud> solicitudes) {
     std::cout << "===== Solicitudes =====" << std::endl;
-    for (const auto& solicitud : solicitudes) {
+    while (!solicitudes.empty()) {
+        Solicitud solicitud = solicitudes.front();
+        solicitudes.pop();
+    // for (const auto& solicitud : solicitudes) {
         std::string estado;
         if (solicitud.getEstado() == EstadoSolicitud::CUMPLIDA) 
             estado = "CUMPLIDA";
